@@ -42,22 +42,57 @@ export class Logger {
 	static formatMessage(message: string, ...params: any[]):string {
 		let regexp = /{(\d+)}/g;
 		return message.replace(regexp, function (match, number): string {
-			return (number < params.length && typeof params[number] != "undefined") ? params[number] : match;
+			return typeof params[number] != "undefined" ? params[number] : match;
 		});
 	}
-
+	
+	private static writeToConsole(message: string) {
+		if (this.isDebugging) {
+			console.log(this.timestamp, consolePrefix, message);
+		}
+	}
+	
 	/* 
 		message: "This is a {0} message for {1}."
 		params: "example","comment"
 	 */
 	static debug(message: string, ...params: any[]): void {
 		if (this.logLevel > LogLevel.Debug && !this.isDebugging) return;
-		if (this.isDebugging) {
-			console.log(this.timestamp, consolePrefix, message ?? emptyStr, params);
+		let formatedMessage:string = message ? this.formatMessage(message, params) : params.join(",") ?? emptyStr;
+		Logger.writeToConsole(formatedMessage);
+		if (this.output != null && this.logLevel <= LogLevel.Debug) {
+			this.output.appendLine(`${this.timestamp} ${formatedMessage}`);
 		}
-		if (this.output != null && this.logLevel > LogLevel.Debug) {
-			this.output.appendLine(`${this.timestamp} ${message ? this.formatMessage(message, params) : params ?? emptyStr}`);
-		}
-
 	}
+
+	static info(message: string, ...params: any[]): void {
+		if (this.logLevel > LogLevel.Info && !this.isDebugging) return;
+		let formatedMessage:string = message ? this.formatMessage(message, params) : params.join(",") ?? emptyStr;
+		Logger.writeToConsole(formatedMessage);
+		if (this.output != null && this.logLevel <= LogLevel.Info) {
+			this.output.appendLine(`${this.timestamp} ${formatedMessage}`);
+		}
+	}
+
+	static warn(message: string, ...params: any[]): void {
+		if (this.logLevel > LogLevel.Warn && !this.isDebugging) return;
+		let formatedMessage:string = message ? this.formatMessage(message, params) : params.join(",") ?? emptyStr;
+		Logger.writeToConsole(formatedMessage);
+		if (this.output != null && this.logLevel <= LogLevel.Warn) {
+			this.output.appendLine(`${this.timestamp} ${formatedMessage}`);
+		}
+	}
+
+	static error(err?: Error, message: string, ...params: any[]): void {
+		if (this.logLevel > LogLevel.Error && !this.isDebugging) return;
+		let formatedMessage:string = message ? this.formatMessage(message, params) : params.join(",") ?? emptyStr;
+		Logger.writeToConsole(formatedMessage);
+		if (this.output != null && this.logLevel <= LogLevel.Error) {
+			this.output.appendLine(`${this.timestamp} ${formatedMessage}`);
+		}
+		if (err != undefined){
+			this.output.appendLine(err.stack?emptyStr);
+		}
+	}
+
 }
